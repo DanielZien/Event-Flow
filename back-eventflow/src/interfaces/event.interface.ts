@@ -5,6 +5,8 @@ export interface Event {
    descricao: string;
    data: Date;
    localizacao: string;
+   imagem?: string;
+   categoria: string;
    ativo: boolean;
 }
 
@@ -13,6 +15,7 @@ export interface EventFilter {
     titulo?: string,
     data?: Date,
     localizacao?: string,
+    categoria?: string,
     status?: string;
     page?: number;
     limit?: number
