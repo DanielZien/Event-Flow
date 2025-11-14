@@ -1,23 +1,43 @@
+import React, { useEffect, useState } from "react";
+
 import { Drawer } from "expo-router/drawer";
 import { AuthProvider } from "./temporario/authContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 
 function CustomDrawerContent(props) {
   const router = useRouter();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const userData = await AsyncStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    }
+    loadUser();
+  }, []);
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
       {/* Cabeçalho */}
       <View style={{ alignItems: "center", marginBottom: 20 }}>
         <Image
-          source={{ uri: "https://www.otempo.com.br/adobe/dynamicmedia/deliver/dm-aid--3c688312-d189-4a89-8be2-3e2c95043af4/entretenimento-gravida-de-taubate-meme-edu-guedes-quadrigemeas-recordtv-hoje-em-dia-chris-flores-1709144777.jpg?quality=82&preferwebp=true&width=800&height=600" }}
+          source={{
+            uri: "https://via.placeholder.com/80", // imagem fixa por enquanto
+          }}
           style={{ width: 80, height: 80, borderRadius: 40 }}
         />
         <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>
-          YARA DE OLIVEIRA MATOS
+          Olá,
         </Text>
-        <Text style={{ color: "gray" }}>Olá,</Text>
+        <Text style={{ fontSize: 14, color: "gray", marginTop: 4 }}>
+          {user ? user.email : "Usuário"}
+        </Text>
+
       </View>
 
       {/* Opções do menu */}
@@ -37,12 +57,20 @@ function CustomDrawerContent(props) {
         <Text style={{ fontSize: 16 }}>Categorias</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={{ marginVertical: 10 }} onPress={() => router.replace("/login")}>
+      <TouchableOpacity
+        style={{ marginVertical: 10 }}
+        onPress={async () => {
+          await AsyncStorage.removeItem("token");
+          await AsyncStorage.removeItem("user");
+          router.replace("/login");
+        }}
+      >
         <Text style={{ fontSize: 16, color: "red" }}>Sair</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
 
 export default function RootLayout() {
   return (

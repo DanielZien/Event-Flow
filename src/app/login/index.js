@@ -1,52 +1,87 @@
 import { StatusBar } from 'expo-status-bar';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, TouchableWithoutFeedback, View, Text, TextInput, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { useAuth } from '../temporario/authContext';
 import { useState } from 'react';
-import { styles } from '../../styles/estilosLogin'
-
+import { styles } from '../../styles/estilosLogin';
+import { api } from "../../services/api2"; // seu serviço Axios
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function Index() {
+    const [login, setLogin] = useState('');
+    const [senha, setSenha] = useState('');
+    const [linkCadastro, setLinkCadastro] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-    const [login, setLogin] = useState('')
-    const [senha, setSenha] = useState('')
-    const [linkCadastro, setLinkCadastro] = useState(false)
-    const { users } = useAuth() //Apenas temporario para testes do fronte
-    const router = useRouter()
-
-    function validarLogin() {
-        const cadastrado = users.find(
-            (u) => u.email === login && u.senha === senha
-        )//temporario
-        if (login == '' || senha == "") {
-            return alert('Por favor preencha os campos')
+    // Função para traduzir mensagens do backend
+    function traduzirMensagem(msg) {
+        if (msg.includes("email must be an email")) {
+            return "Digite um e-mail válido.";
         }
-        if (cadastrado) {
-            if (cadastrado.email === "a"&& cadastrado.senha === "a") {
-                alert("Seja bem vindo ADM")
-                router.replace('/newEvento/eventosCadastrado')
-            } else {
-                alert("login valido :)")
-                router.replace('/evento/home')
-            }
-
-
-        } else {
-            alert("login invalido!!!")
-            setLinkCadastro(true)
+        if (msg.includes("password must be longer")) {
+            return "A senha deve ter pelo menos 6 caracteres.";
         }
+        return msg; // fallback
     }
 
+    async function validarLogin() {
+        if (login === '' || senha === '') {
+            return alert('Por favor preencha os campos');
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await api.post("/auth/login", {
+                email: login,
+                password: senha
+            });
+
+            console.log("Resposta da API:", response.data);
+
+            if (response.data.user) {
+                alert("Login realizado com sucesso!");
+                await AsyncStorage.setItem("token", response.data.access_toekn);
+                await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
+
+
+                if (response.data.user.role === "ADMIN") {
+                    router.replace('/newEvento/eventosCadastrado');
+                } else {
+                    router.replace('/evento/home');
+                }
+            } else {
+                alert("Login inválido!");
+                setLinkCadastro(true);
+            }
+
+        } catch (error) {
+            console.error("Erro ao fazer login:", error.response?.data || error.message);
+
+            const data = error.response?.data;
+            if (data?.message) {
+                const mensagens = Array.isArray(data.message)
+                    ? data.message.map(traduzirMensagem).join("\n")
+                    : traduzirMensagem(data.message);
+
+                alert(mensagens);
+            } else {
+                alert("Erro ao fazer login. Verifique seus dados.");
+            }
+
+            setLinkCadastro(true);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.container}>
                     <View style={styles.logo}>
-                        <Text style={styles.logoText}>
-                            LOGO
-                        </Text>
+                        <Text style={styles.logoText}>LOGO</Text>
                     </View>
 
                     <View style={styles.login}>
@@ -55,35 +90,38 @@ export default function Index() {
                             style={styles.email}
                             value={login}
                             onChangeText={setLogin}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
 
-                        ></TextInput>
                         <TextInput
                             placeholder='Senha'
                             style={styles.senha}
                             value={senha}
                             onChangeText={setSenha}
-
-                        ></TextInput>
-
+                            secureTextEntry
+                        />
 
                         <TouchableOpacity
-                            style={styles.botaoEntrar}
-                            onPress={() => validarLogin()}
+                            style={[styles.botaoEntrar, loading && { opacity: 0.6 }]}
+                            onPress={validarLogin}
+                            disabled={loading}
                         >
-                            <Text style={styles.botaoTexto}>Entrar</Text>
+                            {loading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.botaoTexto}>Entrar</Text>
+                            )}
                         </TouchableOpacity>
 
-                        {linkCadastro && (<Link href={'/login/cadastro'} style={styles.linkText}>Ainda não tem um conta? Cadastre-se clicando aqui</Link>)}
-
-
+                        {linkCadastro && (
+                            <Link href={'/login/cadastro'} style={styles.linkText}>
+                                Ainda não tem uma conta? Cadastre-se clicando aqui
+                            </Link>
+                        )}
                     </View>
-
                 </View>
             </TouchableWithoutFeedback>
-
         </KeyboardAvoidingView>
-
     );
 }
-
-
