@@ -113,7 +113,7 @@ function CustomDrawerContent(props) {
           style={{ width: 80, height: 80, borderRadius: 40 }}
           defaultSource={require("../imgs/logo.webp")}
         />
-        {console.log("Drawer user.imagem:", user?.imagem)}
+        
 
         <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>Olá,</Text>
         <Text style={{ fontSize: 14, color: "gray", marginTop: 4 }}>
