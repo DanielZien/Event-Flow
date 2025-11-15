@@ -184,6 +184,22 @@ export default function Home() {
                 pinColor={marker.pinColor}
               />
             ))}
+            {eventos.map((event) => {
+              console.log(event.localizacao)
+              let Loc = event.localizacao.split("|")[1]
+              let LAT = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[1])
+              let LNG = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[2])
+              console.log(LAT, LNG)
+              return (
+              <Marker
+                key={event.id}
+                coordinate={{ latitude: LAT, longitude: LNG }}
+                title={event.titulo}
+                description={event.descricao}
+                pinColor="pink"
+              />
+            )}
+            )}
           </MapView>
 
           {/* Badge mostrando quantidade de eventos */}
@@ -207,6 +223,22 @@ export default function Home() {
                 pinColor={marker.pinColor}
               />
             ))}
+            {eventos.map((event) => {
+              console.log(event.localizacao)
+              let Loc = event.localizacao.split("|")[1]
+              let LAT = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[1])
+              let LNG = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[2])
+              console.log(LAT, LNG)
+              return (
+              <Marker
+                key={event.id}
+                coordinate={{ latitude: LAT, longitude: LNG }}
+                title={event.titulo}
+                description={event.descricao}
+                pinColor="pink"
+              />
+            )}
+            )}
           </MapView>
 
           {/* Botão flutuante para fechar */}
