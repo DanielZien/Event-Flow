@@ -5,6 +5,8 @@ import { UsersModule } from './modules/users.module';
 import { EventsModule } from './modules/events.module';
 import { RegistrationsModule } from './modules/registrations.module';
 import { PrismaModule } from './modules/prisma.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -16,6 +18,12 @@ import { PrismaModule } from './modules/prisma.module';
     UsersModule,
     EventsModule,
     RegistrationsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
   ],
 })
 export class AppModule {}

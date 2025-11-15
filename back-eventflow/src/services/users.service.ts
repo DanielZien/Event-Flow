@@ -1,14 +1,18 @@
-import { ConflictException, Injectable, UseInterceptors } from "@nestjs/common";
+import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "prisma/prisma.service";
 import { User } from "src/interfaces/user.interface";
 import { UserRole } from "@prisma/client";
 import * as bcrypt from 'bcryptjs';
+import { UserFilterDto } from "src/users/dto/user-filter.dto";
+import { UpdateUserDto } from "src/users/dto/update-user.dto";
+import { CreateUserDto } from "src/users/dto/create-user.dto";
+import { SelfUpdateUserDto } from "src/users/dto/self-update.user.dto";
 
 @Injectable()
 export class UsersService {
     constructor(private prisma: PrismaService){}
 
-    async findAll() {
+    async findAll(filters: UserFilterDto) {
         return this.prisma.user.findMany();
     }
 
@@ -23,7 +27,11 @@ export class UsersService {
                 id: true,
                 email: true,
                 nome: true,
-                role: true
+                role: true,
+                telefone: true,
+                imagem: true,
+                participando: true,
+                eventsCreated: true,
             }
         });
     }
@@ -34,11 +42,23 @@ export class UsersService {
             throw new ConflictException('Email já cadastrado');
         }
         const hashedPassword = await bcrypt.hash(userData.password, 12);
-        return this.prisma.user.create({data: {...userData, role: UserRole.USER,password: hashedPassword}})
+        return this.prisma.user.create({data: {...userData, role: UserRole.USER, password: hashedPassword}})
     }
 
-    async update(id: number, userData: User){
-        return this.prisma.user.update({where: {id}, data: userData});
+    async update(id: number, userData: UpdateUserDto | SelfUpdateUserDto){
+      if (!(userData instanceof UpdateUserDto) && 'role' in userData){
+        throw new UnauthorizedException('Acesso negado, permissão insuficiente');
+      }
+        return this.prisma.user.update({where: {id}, data: userData, select: {
+          id: true,
+          email: true,
+          nome: true,
+          telefone: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+          imagem: true
+        },});
     }
 
     async delete(id: number){

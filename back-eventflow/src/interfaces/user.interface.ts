@@ -6,4 +6,5 @@ export interface User {
     password: string;
     email: string;
     telefone: string;
+    imagem?: string
 }
