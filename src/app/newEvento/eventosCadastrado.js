@@ -12,6 +12,7 @@ export default function NewEvento() {
   const [eventosFiltrados, setEventosFiltrados] = useState([]); // <-- adicionada
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState(""); // <-- adicionada
+  const [deletingIds, setDeletingIds] = useState([]); // <-- ids em deleção
   const router = useRouter();
 
   const FALLBACK_IMAGE = "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg";
@@ -95,6 +96,7 @@ export default function NewEvento() {
         text: "Excluir",
         style: "destructive",
         onPress: async () => {
+          setDeletingIds((prev) => [...prev, id]);
           try {
             await api.delete(`/events/${id}`);
             setEventos((prev) => prev.filter((e) => e.id !== id));
@@ -102,6 +104,8 @@ export default function NewEvento() {
           } catch (error) {
             console.error("Erro ao excluir evento:", error.response?.data || error.message);
             Alert.alert("Erro", "Não foi possível excluir o evento.");
+          } finally {
+            setDeletingIds((prev) => prev.filter((i) => i !== id));
           }
         },
       },
@@ -155,7 +159,11 @@ export default function NewEvento() {
                   style={styles.image}
                 />
                 <TouchableOpacity style={styles.deleteButton} onPress={() => excluirEvento(item.id)}>
-                  <Text style={styles.deleteText}>Excluir Evento ✖</Text>
+                  {deletingIds.includes(item.id) ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.deleteText}>Excluir Evento ✖</Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
