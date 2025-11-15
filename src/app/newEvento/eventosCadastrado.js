@@ -9,7 +9,9 @@ import { useCallback } from "react";
 
 export default function NewEvento() {
   const [eventos, setEventos] = useState([]);
+  const [eventosFiltrados, setEventosFiltrados] = useState([]); // <-- adicionada
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState(""); // <-- adicionada
   const router = useRouter();
 
   const FALLBACK_IMAGE = "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg";
@@ -29,22 +31,30 @@ export default function NewEvento() {
     useCallback(() => {
       async function carregarEventos() {
         try {
+          setLoading(true);
           const response = await api.get("/events");
-          setEventos(response.data.events);
+          const list = response.data.events || [];
+          setEventos(list);
+          setEventosFiltrados(list); // <-- manter filtrados após carregar
         } catch (error) {
           console.error("Erro ao carregar eventos:", error.response?.data || error.message);
+        } finally {
+          setLoading(false);
         }
       }
       carregarEventos();
     }, [])
   );
 
-  // Buscar eventos da API
+  // Buscar eventos da API (montagem inicial)
   useEffect(() => {
     async function carregarEventos() {
       try {
+        setLoading(true);
         const response = await api.get("/events");
-        setEventos(response.data.events); // pega o array da API
+        const list = response.data.events || [];
+        setEventos(list); // pega o array da API
+        setEventosFiltrados(list); // inicializa filtrados
       } catch (error) {
         console.error("Erro ao carregar eventos:", error.response?.data || error.message);
       } finally {
@@ -53,6 +63,29 @@ export default function NewEvento() {
     }
     carregarEventos();
   }, []);
+
+  // Filtrar quando searchText ou lista de eventos mudar
+  useEffect(() => {
+    const term = (searchText || "").trim().toLowerCase();
+    if (term === "") {
+      setEventosFiltrados(eventos);
+      return;
+    }
+
+    const filtered = eventos.filter((e) => {
+      const titulo = (e.titulo || "").toString().toLowerCase();
+      const categoria = ((e.categoria || e.tipo) || "").toString().toLowerCase();
+      const descricao = (e.descricao || "").toString().toLowerCase();
+      const local = (e.localizacao || "").toString().toLowerCase();
+      return (
+        titulo.includes(term) ||
+        categoria.includes(term) ||
+        descricao.includes(term) ||
+        local.includes(term)
+      );
+    });
+    setEventosFiltrados(filtered);
+  }, [searchText, eventos]);
 
   // Funções de exemplo
   const excluirEvento = (id) => {
@@ -65,6 +98,7 @@ export default function NewEvento() {
           try {
             await api.delete(`/events/${id}`);
             setEventos((prev) => prev.filter((e) => e.id !== id));
+            setEventosFiltrados((prev) => prev.filter((e) => e.id !== id));
           } catch (error) {
             console.error("Erro ao excluir evento:", error.response?.data || error.message);
             Alert.alert("Erro", "Não foi possível excluir o evento.");
@@ -87,12 +121,18 @@ export default function NewEvento() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Gerenciar Eventos</Text>
-        <TextInput style={styles.search} placeholder="Pesquise Eventos..." />
+        <TextInput
+          style={styles.search}
+          placeholder="Pesquise Eventos..."
+          value={searchText}
+          onChangeText={setSearchText}
+          returnKeyType="search"
+        />
         <TouchableOpacity style={styles.createButton} onPress={criarEvento}>
           <Text style={styles.createText}>Criar Evento +</Text>
         </TouchableOpacity>
         <Text style={styles.subtitle}>
-          Mostrando {eventos.length} de {eventos.length} Eventos
+          Mostrando {eventosFiltrados.length} de {eventos.length} Eventos
         </Text>
       </View>
 
@@ -101,7 +141,7 @@ export default function NewEvento() {
         <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
-          data={eventos}
+          data={eventosFiltrados}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (

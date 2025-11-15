@@ -179,11 +179,22 @@ export default function CadastrarEvento() {
     const imagensString = imagens.filter(img => img).join("|");
     const enderecoCompleto = `${rua} ${numero}, ${cidade}, ${estado}`.trim();
 
+    // garantir coords em formato numérico e com precisão controlada
+    const latNum = Number(latitude) || 0;
+    const lngNum = Number(longitude) || 0;
+    const latStr = latNum.toFixed(6);
+    const lngStr = lngNum.toFixed(6);
+
+    // Salvar a localizacao como "endereco | lat,lng" para permitir split/parse na home
+    const localizacaoComCoords = enderecoCompleto
+      ? `${enderecoCompleto} | ${latStr}, ${lngStr}`
+      : `${latStr}, ${lngStr}`;
+
     const novoEvento = {
       titulo: nome,
       descricao,
       data: data.toISOString(),
-      localizacao: enderecoCompleto || `${latitude}, ${longitude}`,
+      localizacao: localizacaoComCoords,
       hora_inicio: horaInicio.toISOString(),
       categoria,
       imagem: imagensString || "",

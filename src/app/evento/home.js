@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useRouter, Link, useFocusEffect } from "expo-router";
@@ -7,8 +7,9 @@ import { api } from "../../services/api2";
 import { useCallback } from "react";
 
 const FALLBACK_COORDINATE = {
-  latitude: -9.976227513833033,
-  longitude: -67.84134974624467,
+  // Rio Branco, Acre (aprox.)
+  latitude: -9.97499,
+  longitude: -67.82430,
 };
 
 export default function Home() {
@@ -19,6 +20,13 @@ export default function Home() {
   const [searchText, setSearchText] = useState("");
   const [markerSelecionado, setMarkerSelecionado] = useState(null);
   const [mapCenter, setMapCenter] = useState(FALLBACK_COORDINATE);
+  const [mapRegion, setMapRegion] = useState({
+    latitude: FALLBACK_COORDINATE.latitude,
+    longitude: FALLBACK_COORDINATE.longitude,
+    latitudeDelta: 0.21,
+    longitudeDelta: 0.21,
+  });
+  const mapRef = useRef(null);
   const router = useRouter();
 
   // Carregar eventos ao focar na tela
@@ -77,11 +85,28 @@ export default function Home() {
       setEventosFiltrados(normalizados);
 
       // definir centro do mapa: primeiro evento com coords válidas ou fallback
-      const primeiroComCoords = normalizados.find((e) => e.latitude !== null && e.longitude !== null);
-      if (primeiroComCoords) {
-        setMapCenter({ latitude: primeiroComCoords.latitude, longitude: primeiroComCoords.longitude });
+      const coordsList = normalizados.filter((e) => e.latitude !== null && e.longitude !== null);
+      if (coordsList.length > 0) {
+        const lats = coordsList.map(c => Number(c.latitude));
+        const lngs = coordsList.map(c => Number(c.longitude));
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+        const centerLat = (minLat + maxLat) / 2;
+        const centerLng = (minLng + maxLng) / 2;
+        const latDelta = Math.max(0.02, (maxLat - minLat) * 1.4);
+        const lngDelta = Math.max(0.02, (maxLng - minLng) * 1.4);
+
+        setMapCenter({ latitude: centerLat, longitude: centerLng });
+        setMapRegion({ latitude: centerLat, longitude: centerLng, latitudeDelta: latDelta, longitudeDelta: lngDelta });
+        // tentar animar (se já tiver ref do mapa)
+        if (mapRef.current && mapRef.current.animateToRegion) {
+          mapRef.current.animateToRegion({ latitude: centerLat, longitude: centerLng, latitudeDelta: latDelta, longitudeDelta: lngDelta }, 500);
+        }
       } else {
         setMapCenter(FALLBACK_COORDINATE);
+        setMapRegion({ latitude: FALLBACK_COORDINATE.latitude, longitude: FALLBACK_COORDINATE.longitude, latitudeDelta: 0.21, longitudeDelta: 0.21 });
       }
     } catch (error) {
       console.error("Erro ao carregar eventos:", error.response?.data || error.message);
@@ -184,14 +209,11 @@ export default function Home() {
       {!expanded ? (
         <View style={styles.mapaCard}>
           <MapView
+            ref={mapRef}
             style={{ flex: 1 }}
-            initialRegion={{
-              latitude: mapCenter.latitude,
-              longitude: mapCenter.longitude,
-              latitudeDelta: 0.210,
-              longitudeDelta: 0.210,
-            }}
+            region={mapRegion}
             onPress={() => setExpanded(true)} // usar onPress do MapView (sem TouchableOpacity)
+            onRegionChangeComplete={(r) => setMapRegion(r)}
           >
             {/* Um marker por evento (cada evento gera seu próprio marker) */}
             {eventos
@@ -199,10 +221,7 @@ export default function Home() {
               .map((evento) => {
                 const lat = Number(evento.latitude);
                 const lng = Number(evento.longitude);
-                if (isNaN(lat) || isNaN(lng)) {
-                  console.warn("Evento com coords inválidas:", evento.id, evento.localizacao);
-                  return null;
-                }
+                if (isNaN(lat) || isNaN(lng)) return null;
                 return (
                   <Marker
                     key={evento.id?.toString() || `${lat}_${lng}`}
@@ -224,24 +243,18 @@ export default function Home() {
       ) : (
         <View style={styles.mapaFull}>
           <MapView
+            ref={mapRef}
             style={{ flex: 1 }}
-            initialRegion={{
-              latitude: mapCenter.latitude,
-              longitude: mapCenter.longitude,
-              latitudeDelta: 0.210,
-              longitudeDelta: 0.210,
-            }}
+            region={mapRegion}
             onPress={() => { /* opcional: capturar toques no mapa expanded */ }}
+            onRegionChangeComplete={(r) => setMapRegion(r)}
           >
             {eventos
               .filter((ev) => ev.latitude !== null && ev.longitude !== null)
               .map((evento) => {
                 const lat = Number(evento.latitude);
                 const lng = Number(evento.longitude);
-                if (isNaN(lat) || isNaN(lng)) {
-                  console.warn("Evento com coords inválidas (expanded):", evento.id, evento.localizacao);
-                  return null;
-                }
+                if (isNaN(lat) || isNaN(lng)) return null;
                 return (
                   <Marker
                     key={evento.id?.toString() || `${lat}_${lng}`}
