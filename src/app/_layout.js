@@ -13,7 +13,7 @@ function CustomDrawerContent(props) {
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
-  
+
   useEffect(() => {
     // Escutar mudanças no usuário
     const unsubscribe = sessionService.subscribeToAuthChanges((currentUser) => {
@@ -76,7 +76,7 @@ function CustomDrawerContent(props) {
         <Text style={{ fontSize: 16 }}>Home</Text>
       </TouchableOpacity>
 
-      
+
 
       {/* Opções APENAS para ADMIN */}
       {role === "ADMIN" && (
@@ -95,16 +95,16 @@ function CustomDrawerContent(props) {
             onPress={() => router.replace("/newEvento/locaisCadastrados")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-               Locais Cadastrados
+              Locais Cadastrados
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={{ marginVertical: 10 }} 
+          <TouchableOpacity
+            style={{ marginVertical: 10 }}
             onPress={() => navigation.navigate("evento/categorias")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-               Categorias
+              Categorias
             </Text>
           </TouchableOpacity>
         </>
@@ -163,30 +163,40 @@ export default function RootLayout() {
         <Drawer.Screen name="evento/conta" options={{ title: "Minha Conta" }} />
         <Drawer.Screen name="evento/notificacao" options={{ title: "Notificação" }} />
         <Drawer.Screen name="evento/termo" options={{ title: "Termos" }} />
+        <Drawer.Screen
+              name="evento/details"
+              options={{ title: "Sobre o Evento" }}
+            />
+<Drawer.Screen
+              name="newEvento/eventosCadastrado"
+              options={{ title: "Eventos Cadastrados" }}
+            />
+
+            <Drawer.Screen
+              name="newEvento/criadorEvento"
+              options={{ title: "Criar Evento" }}
+            />
+            <Drawer.Screen
+              name="newEvento/editarEvento"
+              options={{ title: "Editar Evento" }}
+            />
+            
+            <Drawer.Screen
+              name="newEvento/locaisCadastrados"
+              options={{ title: "Locais Cadastrados" }}
+            />
+            <Drawer.Screen
+              name="evento/categorias"
+              options={{ title: "Categorias" }}
+            />
+            <Drawer.Screen name="newEvento/cadastrarMapa" 
+            options={{ title: "Cadastrar Mapa" }} />
+           
 
         {/* Rotas APENAS para ADMIN */}
         {role === "ADMIN" && (
           <>
-            <Drawer.Screen 
-              name="newEvento/criadorEvento" 
-              options={{ title: "Criar Evento" }} 
-            />
-            <Drawer.Screen 
-              name="newEvento/editarEvento" 
-              options={{ title: "Editar Evento" }} 
-            />
-            <Drawer.Screen 
-              name="newEvento/eventosCadastrado" 
-              options={{ title: "Eventos Cadastrados" }} 
-            />
-            <Drawer.Screen 
-              name="newEvento/locaisCadastrados" 
-              options={{ title: "Locais Cadastrados" }} 
-            />
-            <Drawer.Screen 
-              name="evento/categorias" 
-              options={{ title: "Categorias" }} 
-            />
+            
           </>
         )}
       </Drawer>

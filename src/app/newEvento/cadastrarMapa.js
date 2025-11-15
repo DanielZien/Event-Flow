@@ -1,6 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from "react-native";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import MapView, { Marker } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -34,51 +35,55 @@ export default function CadastrarMapa() {
         })();
     }, []);
 
-    // Preencher campos se localParam estiver presente
-    useEffect(() => {
-        // Se veio param, preencher para edição; se não, resetar para criação de novo local
-        if (localParam) {
-            try {
-                const parsed = typeof localParam === "string" ? JSON.parse(localParam) : localParam;
-                setTitulo(parsed.titulo || "");
-                setRua(parsed.rua || "");
-                setNumero(parsed.numero || "");
-                setCidade(parsed.cidade || "");
-                setEstado(parsed.estado || "");
-                setCep(parsed.cep || "");
-                const lat = parsed.latitude ?? parsed.lat ?? -9.97;
-                const lng = parsed.longitude ?? parsed.lng ?? -67.84;
-                setLatitude(Number(lat));
-                setLongitude(Number(lng));
-                setMarker({ latitude: Number(lat), longitude: Number(lng) });
-                setEditingId(parsed.id); // guardamos id para update
+    const limparForm = () => {
+      setEditingId(null);
+      setTitulo("");
+      setRua("");
+      setNumero("");
+      setCidade("");
+      setEstado("");
+      setCep("");
+      const defaultLat = -9.97;
+      const defaultLng = -67.84;
+      setLatitude(defaultLat);
+      setLongitude(defaultLng);
+      setMarker({ latitude: defaultLat, longitude: defaultLng });
+      if (mapRef.current && mapRef.current.animateToRegion) {
+        mapRef.current.animateToRegion({ latitude: defaultLat, longitude: defaultLng, latitudeDelta: 0.05, longitudeDelta: 0.05 }, 300);
+      }
+    };
 
-                // centralizar mapa no local editado
-                if (mapRef.current && mapRef.current.animateToRegion) {
-                    mapRef.current.animateToRegion({ latitude: Number(lat), longitude: Number(lng), latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
-                }
-            } catch (e) {
-                console.warn("Erro ao parsear param local:", e);
-            }
-        } else {
-            // Novo local: garantir campos vazios / valores padrão
-            setEditingId(null);
-            setTitulo("");
-            setRua("");
-            setNumero("");
-            setCidade("");
-            setEstado("");
-            setCep("");
-            const defaultLat = -9.97;
-            const defaultLng = -67.84;
-            setLatitude(defaultLat);
-            setLongitude(defaultLng);
-            setMarker({ latitude: defaultLat, longitude: defaultLng });
+    // Reset/ preencher quando a tela ganhar foco (evita valores antigos)
+    useFocusEffect(
+      useCallback(() => {
+        if (localParam) {
+          try {
+            const parsed = typeof localParam === "string" ? JSON.parse(localParam) : localParam;
+            setTitulo(parsed.titulo || "");
+            setRua(parsed.rua || "");
+            setNumero(parsed.numero || "");
+            setCidade(parsed.cidade || "");
+            setEstado(parsed.estado || "");
+            setCep(parsed.cep || "");
+            const lat = parsed.latitude ?? parsed.lat ?? -9.97;
+            const lng = parsed.longitude ?? parsed.lng ?? -67.84;
+            setLatitude(Number(lat));
+            setLongitude(Number(lng));
+            setMarker({ latitude: Number(lat), longitude: Number(lng) });
+            setEditingId(parsed.id);
             if (mapRef.current && mapRef.current.animateToRegion) {
-                mapRef.current.animateToRegion({ latitude: defaultLat, longitude: defaultLng, latitudeDelta: 0.05, longitudeDelta: 0.05 }, 300);
+              mapRef.current.animateToRegion({ latitude: Number(lat), longitude: Number(lng), latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
             }
+          } catch (e) {
+            console.warn("Erro ao parsear param local:", e);
+            limparForm();
+          }
+        } else {
+          limparForm();
         }
-    }, [localParam]);
+        // não retornar cleanup necessário
+      }, [localParam])
+    );
 
     // Sincroniza marker quando latitude/longitude mudam manualmente
     useEffect(() => {

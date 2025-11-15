@@ -175,8 +175,8 @@ export default function NewEvento() {
                   </Text>
                 </View>
 
-                {/* Tipo (por enquanto não tem categoria) */}
-                <Text style={styles.type}>Tipo: {item.tipo || "Não informado"}</Text>
+                {/* Tipo / Categoria */}
+                <Text style={styles.type}>Tipo: {item.categoria || item.tipo || "Não informado"}</Text>
 
                 {/* Linha ingresso + botões */}
                 <View style={styles.rowBottom}>
