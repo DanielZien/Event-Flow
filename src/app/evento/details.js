@@ -1,68 +1,75 @@
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { styles } from "../../styles/detailsStyle";
+import BotaoVoltar from "../../components/botaoVoltar"
 
 export default function Details() {
     const { evento } = useLocalSearchParams();
     const data = JSON.parse(evento);
     const router = useRouter();
 
-    // Coordenadas do endereço (exemplo fixo)
+    // Coordenadas: por enquanto fixas, depois pode usar geocoding do endereço
     const coordinate = {
-        latitude: -23.55052,   // São Paulo
-        longitude: -46.633308,
+        latitude: -9.9762275,
+        longitude: -67.8413497,
     };
 
     return (
         <ScrollView style={styles.container}>
             {/* Botão Voltar */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.replace("evento/home")}>
-                <Text style={styles.backText}>← Voltar</Text>
-            </TouchableOpacity>
+            <View style={{flex:1}}><BotaoVoltar /></View>
+            
 
             {/* Card único */}
             <View style={styles.card}>
                 {/* Imagem */}
-                <Image source={{ uri: data.imagem }} style={styles.image} />
+                <Image
+                    source={{
+                        uri:
+                            data.imagem ||
+                            "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg",
+                    }}
+                    style={styles.image}
+                />
 
                 {/* Título */}
                 <Text style={styles.title}>{data.titulo}</Text>
 
-                {/* Tipo */}
-                <Text style={styles.type}>{data.tipo}</Text>
-
-                {/* Data */}
-                <Text style={styles.date}>📅 {data.data}</Text>
+                {/* Data formatada */}
+                <Text style={styles.date}>
+                    📅{" "}
+                    {new Date(data.data).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    })}
+                </Text>
 
                 {/* Descrição */}
-                <Text style={styles.description}>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod...
-                </Text>
-                <View style={styles.divider} />   {/* linha separadora */}
-
+                <Text style={styles.description}>{data.descricao}</Text>
+                <View style={styles.divider} />
 
                 {/* Informações do Evento */}
                 <Text style={styles.sectionTitle}>Informações do Evento</Text>
                 <View style={styles.row}>
-                    <Text style={styles.info}>📅 Data: {data.data}</Text>
-                    <Text style={styles.info}>⏰ Horário: 08:00h — 12:30h</Text>
+                    <Text style={styles.info}>📍 Localização: {data.localizacao}</Text>
                 </View>
 
-                {/* Valor do ingresso como botão */}
-
+                {/* Valor do ingresso */}
                 <TouchableOpacity style={styles.priceButton}>
                     <View style={styles.rowBetween}>
                         <Text style={styles.priceLabel}>Valor Ingresso</Text>
-                        <Text style={styles.priceText}>{data.preco}</Text>
+                        <Text style={styles.priceText}>{data.preco || "Gratuito"}</Text>
                     </View>
                 </TouchableOpacity>
 
-
-                {/* Localização */}
+                {/* Localização no mapa */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>📍 Localização</Text>
-                    <View style={styles.sectionLine}/>
+                    <Text style={styles.sectionTitle}>📍 Mapa</Text>
+                    <View style={styles.sectionLine} />
                 </View>
 
                 <View style={styles.mapContainer}>
@@ -75,19 +82,19 @@ export default function Details() {
                             longitudeDelta: 0.01,
                         }}
                     >
-                        <Marker coordinate={coordinate} title={data.titulo} description="Local do evento" />
+                        <Marker coordinate={coordinate} title={data.titulo} description={data.localizacao} />
                     </MapView>
                 </View>
-                <Text style={styles.info}>
-                    <Text style={styles.bold}>Endereço: </Text>Avenida Central, 1234
-                </Text>
-                <Text style={styles.info}>
-                    <Text style={styles.bold}>Bairro: </Text>Aurora, Solaris City – SP
-                </Text>
-                <Text style={styles.info}>
-                    <Text style={styles.bold}>Ponto de Referência: </Text>Próximo ao Lago da Lua e ao Shopping Estação Aurora
-                </Text>
 
+                {/* Organizador */}
+                {data.creator && (
+                    <>
+                        <Text style={styles.sectionTitle}>Organizador</Text>
+                        <Text style={styles.info}>👤 {data.creator.nome}</Text>
+                        <Text style={styles.info}>📧 {data.creator.email}</Text>
+                        <Text style={styles.info}>📱 {data.creator.telefone}</Text>
+                    </>
+                )}
             </View>
         </ScrollView>
     );

@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { styles } from '../../styles/estilosLogin';
@@ -63,10 +63,12 @@ export default function TelaCadastro() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.container}>
         <View style={styles.logo}>
-          <Text style={styles.logoText}>
-            LOGO
-          </Text>
+          <Image
+            source={require("../../imgs/logo.webp")} // ajuste o caminho conforme sua estrutura
+            style={{ width: 120, height: 120, resizeMode: "contain" }}
+          />
         </View>
+
 
         <View style={styles.login}>
           <TextInput
@@ -122,6 +124,20 @@ export default function TelaCadastro() {
               <Text style={styles.botaoTexto}>Cadastrar-se</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+  style={{
+    marginTop: 12,
+    padding: 10,
+    alignItems: "center",
+  }}
+  onPress={() => router.replace("/login")}
+>
+  <Text style={{ color: "#08007B", fontWeight: "bold" }}>
+    ← Voltar para Login
+  </Text>
+</TouchableOpacity>
+
 
 
 

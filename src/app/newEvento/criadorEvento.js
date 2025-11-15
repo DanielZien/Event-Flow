@@ -5,6 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import MapView from "react-native-maps";
+import { api } from "../../services/api2";
 
 
 export default function CadastrarEvento() {
@@ -40,11 +41,30 @@ export default function CadastrarEvento() {
 
   const router = useRouter()
 
-  const salvarEvento = () => {
-    alert(
-      `Evento salvo:\n${nome}\n${descricao}\nCategoria: ${categoria}\nData: ${data.toLocaleDateString()}\nHorário: ${horaInicio.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${horaFim.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\nLocal: ${local}\nImagens: ${imagens.length}`
-    );
+  const salvarEvento = async () => {
+    const novoEvento = {
+      titulo: nome,
+      descricao,
+      data: data.toISOString(), // ✅ formato ISO
+      localizacao: local || `${latitude}, ${longitude}`,
+      hora_inicio: horaInicio.toISOString(), // também ISO
+      hora_fim: horaFim.toISOString(),       // também ISO
+      categoria,
+      imagem: imagens[0] || "",
+      preco: 0
+    };
+
+    try {
+      const response = await api.post("/events", novoEvento);
+      alert("Evento cadastrado com sucesso!");
+      router.replace("/newEvento/eventosCadastrados");
+    } catch (error) {
+      console.error("Erro ao salvar evento:", error.response?.data || error.message);
+      alert("Erro ao salvar evento");
+    }
   };
+
+
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -176,33 +196,33 @@ export default function CadastrarEvento() {
         </View>
 
         <View style={styles.field}>
-      <Text style={styles.label}>Ou</Text>
-      <Text style={styles.label}>Marque no Mapa o Local Desejado</Text>
+          <Text style={styles.label}>Ou</Text>
+          <Text style={styles.label}>Marque no Mapa o Local Desejado</Text>
 
-      <TouchableOpacity
-        activeOpacity={0.9}
-        style={styles.mapWrapper}
-        onPress={() => router.push("/newEvento/locaisCadastrados")}
-      >
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: -9.97,
-            longitude: -67.84,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-          scrollEnabled={false}
-          zoomEnabled={false}
-          rotateEnabled={false}
-        />
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.mapWrapper}
+            onPress={() => router.push("/newEvento/locaisCadastrados")}
+          >
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: -9.97,
+                longitude: -67.84,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+            />
 
-        {/* Elemento flutuante no centro */}
-        <View style={styles.markerCenter}>
-          <Text style={styles.markerIcon}>📍Marque no Mapa</Text>
+            {/* Elemento flutuante no centro */}
+            <View style={styles.markerCenter}>
+              <Text style={styles.markerIcon}>📍Marque no Mapa</Text>
+            </View>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
-    </View>
 
 
         {/* Latitude e Longitude */}

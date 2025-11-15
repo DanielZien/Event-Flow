@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, TouchableWithoutFeedback, View, Text, TextInput, ActivityIndicator } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, TouchableWithoutFeedback, View, Text, TextInput, ActivityIndicator,Image } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { styles } from '../../styles/estilosLogin';
@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Index() {
     const [login, setLogin] = useState('');
     const [senha, setSenha] = useState('');
-    const [linkCadastro, setLinkCadastro] = useState(false);
+    const [linkCadastro, setLinkCadastro] = useState(true);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -81,8 +81,12 @@ export default function Index() {
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.container}>
                     <View style={styles.logo}>
-                        <Text style={styles.logoText}>LOGO</Text>
+                        <Image
+                            source={require("../../imgs/logo.webp")} // ajuste o caminho conforme sua estrutura
+                            style={{ width: 120, height: 120, resizeMode: "contain" }}
+                        />
                     </View>
+
 
                     <View style={styles.login}>
                         <TextInput

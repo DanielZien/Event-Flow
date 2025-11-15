@@ -1,36 +1,27 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
-import { useState } from "react";
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Image,ActivityIndicator  } from 'react-native';
+import { useState,useEffect } from "react";
 import { useRouter } from 'expo-router';
+import { api } from "../../services/api2";
 
 export default function NewEvento() {
-  const [eventos, setEventos] = useState([
-    {
-      id: "1",
-      titulo: "Lorem ipsum dolor sit ame...",
-      tipo: "Palestra",
-      data: "12/11/2025",
-      preco: "R$ 00,00",
-      imagem: "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg"
-    },
-    {
-      id: "2",
-      titulo: "Workshop de Tecnologia",
-      tipo: "Workshop",
-      data: "20/11/2025",
-      preco: "R$ 50,00",
-      imagem: "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg"
-    },
-    {
-      id: "3",
-      titulo: "Show Musical",
-      tipo: "Show",
-      data: "25/11/2025",
-      preco: "R$ 100,00",
-      imagem: "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg"
-    }
-  ]);
-
+  const [eventos, setEventos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Buscar eventos da API
+  useEffect(() => {
+    async function carregarEventos() {
+      try {
+        const response = await api.get("/events");
+        setEventos(response.data.events); // pega o array da API
+      } catch (error) {
+        console.error("Erro ao carregar eventos:", error.response?.data || error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    carregarEventos();
+  }, []);
 
   // Funções de exemplo
   const excluirEvento = (id) => {
@@ -42,9 +33,7 @@ export default function NewEvento() {
   };
 
   const criarEvento = () => {
-    alert("Criar novo evento");
-    router.push("/newEvento/criadorEvento")
-    
+    router.push("/newEvento/criadorEvento");
   };
 
   return (
@@ -52,77 +41,88 @@ export default function NewEvento() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Gerenciar Eventos</Text>
-        <TextInput
-          style={styles.search}
-          placeholder="Pesquise Eventos..."
-        />
+        <TextInput style={styles.search} placeholder="Pesquise Eventos..." />
         <TouchableOpacity style={styles.createButton} onPress={criarEvento}>
           <Text style={styles.createText}>Criar Evento +</Text>
         </TouchableOpacity>
         <Text style={styles.subtitle}>
-          Mostrando {eventos.length} de 45 Eventos
+          Mostrando {eventos.length} de {eventos.length} Eventos
         </Text>
       </View>
 
       {/* Lista de eventos */}
-      <FlatList
-  data={eventos}
-  keyExtractor={(item) => item.id}
-  showsVerticalScrollIndicator={false}
-  renderItem={({ item }) => (
-    <View style={styles.card}>
-      {/* Imagem com botão Excluir flutuante */}
-      <View>
-        <Image source={{ uri: item.imagem }} style={styles.image} />
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => excluirEvento(item.id)}
-        >
-          <Text style={styles.deleteText}>Excluir Evento ✖</Text>
-        </TouchableOpacity>
-      </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
+      ) : (
+        <FlatList
+          data={eventos}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              {/* Imagem com botão Excluir flutuante */}
+              <View>
+                <Image
+                  source={{
+                    uri:
+                      item.imagem ||
+                      "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg",
+                  }}
+                  style={styles.image}
+                />
+                <TouchableOpacity style={styles.deleteButton} onPress={() => excluirEvento(item.id)}>
+                  <Text style={styles.deleteText}>Excluir Evento ✖</Text>
+                </TouchableOpacity>
+              </View>
 
-      {/* Informações */}
-      <View style={styles.info}>
-        {/* Linha título + data */}
-        <View style={styles.row}>
-          <Text style={styles.eventTitle}>{item.titulo}</Text>
-          <Text style={styles.date}>{item.data}</Text>
-        </View>
+              {/* Informações */}
+              <View style={styles.info}>
+                {/* Linha título + data */}
+                <View style={styles.row}>
+                  <Text style={styles.eventTitle}>{item.titulo}</Text>
+                  <Text style={styles.date}>
+                    {new Date(item.data).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
 
-        {/* Tipo */}
-        <Text style={styles.type}>{item.tipo}</Text>
+                {/* Tipo (por enquanto não tem categoria) */}
+                <Text style={styles.type}>Tipo: {item.tipo || "Não informado"}</Text>
 
-        {/* Linha ingresso + botões */}
-        <View style={styles.rowBottom}>
-          <View>
-            <Text style={styles.ingressoLabel}>Ingresso</Text>
-            <Text style={styles.price}>{item.preco}</Text>
-          </View>
+                {/* Linha ingresso + botões */}
+                <View style={styles.rowBottom}>
+                  <View>
+                    <Text style={styles.ingressoLabel}>Ingresso</Text>
+                    <Text style={styles.price}>{item.preco || "Gratuito"}</Text>
+                  </View>
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.edit]}
-              onPress={() => editarEvento(item.id)}
-            >
-              <Text style={styles.buttonText}>Editar</Text>
-            </TouchableOpacity>
+                  <View style={styles.actions}>
+                    <TouchableOpacity style={[styles.actionButton, styles.edit]} onPress={() => editarEvento(item.id)}>
+                      <Text style={styles.buttonText}>Editar</Text>
+                    </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.actionButton, styles.view]}
-              onPress={() => alert(`Ver evento ${item.id}`)}
-            >
-              <Text style={styles.buttonText}>Ver</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </View>
-  )}
-/>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.view]}
+                      onPress={() => router.push({ pathname: "/evento/details", params: { evento: JSON.stringify(item) } })}
+                    >
+                      <Text style={styles.buttonText}>Ver</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
