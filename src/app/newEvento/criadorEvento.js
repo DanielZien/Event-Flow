@@ -158,7 +158,7 @@ export default function CadastrarEvento() {
         // Preencher campos automaticamente
         setRua(localSelecionado.rua);
         setNumero(localSelecionado.numero);
-        setCidade(localSelecionado.cidade);
+        setCidade(localSelecionado.cidade || "Rio Branco");
         setEstado(localSelecionado.estado);
         setCep(localSelecionado.cep);
         setLatitude(localSelecionado.latitude);
@@ -462,7 +462,7 @@ export default function CadastrarEvento() {
             <Text style={styles.buttonText}>Salvar</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => router.back()}>
+        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => router.replace("/newEvento/eventosCadastrado")}>
           <Text style={styles.buttonText}>Cancelar</Text>
         </TouchableOpacity>
       </View>

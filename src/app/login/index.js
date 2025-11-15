@@ -41,7 +41,7 @@ export default function Index() {
             console.log("Resposta da API:", response.data);
 
             if (response.data.user) {
-                alert("Login realizado com sucesso!");
+                console.log("Login realizado com sucesso!");
                 await AsyncStorage.setItem("token", response.data.access_toekn);
                 await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
 

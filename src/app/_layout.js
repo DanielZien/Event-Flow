@@ -76,9 +76,7 @@ function CustomDrawerContent(props) {
         <Text style={{ fontSize: 16 }}>Home</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={{ marginVertical: 10 }} onPress={() => navigation.navigate("evento/notificacao")}>
-        <Text style={{ fontSize: 16 }}>Notificação</Text>
-      </TouchableOpacity>
+      
 
       {/* Opções APENAS para ADMIN */}
       {role === "ADMIN" && (
@@ -88,7 +86,7 @@ function CustomDrawerContent(props) {
             onPress={() => router.replace("/newEvento/eventosCadastrado")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-              📋 Eventos Cadastrados
+              Eventos Cadastrados
             </Text>
           </TouchableOpacity>
 
@@ -97,7 +95,7 @@ function CustomDrawerContent(props) {
             onPress={() => router.replace("/newEvento/locaisCadastrados")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-              📍 Locais Cadastrados
+               Locais Cadastrados
             </Text>
           </TouchableOpacity>
 
@@ -106,7 +104,7 @@ function CustomDrawerContent(props) {
             onPress={() => navigation.navigate("evento/categorias")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-              📂 Categorias
+               Categorias
             </Text>
           </TouchableOpacity>
         </>
