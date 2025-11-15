@@ -33,11 +33,16 @@ export class EventsController {
 
   @Get()
   @ApiOperation({ summary: 'Listar todos os eventos' })
-  @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'dateFrom', required: false })
   @ApiQuery({ name: 'dateTo', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'id', required: false, type: Number })
+  @ApiQuery({ name: 'titulo', required: false, type: String })
+  @ApiQuery({ name: 'data', required: false, type: Date })
+  @ApiQuery({ name: 'localizacao', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, type: String })
+  @ApiQuery({ name: 'categoria', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Eventos listados com sucesso' })
   findAll(
     @Query('dateFrom') dateFrom?: string,
@@ -48,7 +53,8 @@ export class EventsController {
     @Query('titulo') titulo?: string,
     @Query('data') data?: Date,
     @Query('localizacao') localizacao?: string,
-    @Query('status') status?: string
+    @Query('status') status?: string,
+    @Query('categoria') categoria?: string
   ) {
     const filters = {
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
@@ -59,7 +65,8 @@ export class EventsController {
       titulo: titulo ? titulo : undefined,
       data: data ? new Date(data) : undefined,
       localizacao: localizacao ? localizacao : undefined,
-      status: status ? status : undefined
+      status: status ? status : undefined,
+      categoria: categoria ? categoria : undefined
     };
 
     return this.eventsService.findAll(filters);
@@ -81,7 +88,7 @@ export class EventsController {
   @ApiResponse({ status: 403, description: 'Sem permissão para editar este evento' })
   @ApiResponse({ status: 404, description: 'Evento não encontrado' })
   update(@Param('id') id: number, @Body() updateEventDto: UpdateEventDto, @Request() req) {
-    return this.eventsService.update(id, updateEventDto, req.user.userId);
+    return this.eventsService.update(id, updateEventDto, req.user.id);
   }
 
   @Delete(':id')
@@ -92,6 +99,6 @@ export class EventsController {
   @ApiResponse({ status: 403, description: 'Sem permissão para excluir este evento' })
   @ApiResponse({ status: 404, description: 'Evento não encontrado' })
   remove(@Param('id') id: number, @Request() req) {
-    return this.eventsService.remove(id, req.user.userId);
+    return this.eventsService.remove(id, req.user.id);
   }
 }

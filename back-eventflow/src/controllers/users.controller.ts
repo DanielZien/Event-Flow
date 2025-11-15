@@ -28,7 +28,7 @@ import {
     @ApiResponse({ status: 200, description: 'Perfil retornado com sucesso' })
     @ApiResponse({ status: 401, description: 'Não autorizado' })
     getProfile(@Request() req) {
-      return this.usersService.findById(req.user.userId);
+      return this.usersService.findById(req.user.id);
     }
   
     @Get()
@@ -54,7 +54,7 @@ import {
     @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
     async findOne(@Param('id') id: number, @Request() req) {
       // Usuários podem ver apenas seu próprio perfil, admins podem ver qualquer um
-      if (req.user.role !== 'ADMIN' && req.user.userId !== id) {
+      if (req.user.role !== 'ADMIN' && req.user.id !== id) {
         throw new ForbiddenException('Você só pode visualizar seu próprio perfil');
       }
   
@@ -76,7 +76,7 @@ import {
     @ApiResponse({ status: 200, description: 'Perfil atualizado com sucesso' })
     @ApiResponse({ status: 401, description: 'Não autorizado' })
     async updateProfile(@Body() updateUserDto: any, @Request() req) {
-      const updatedUser = await this.usersService.update(req.user.userId, updateUserDto);
+      const updatedUser = await this.usersService.update(req.user.id, updateUserDto);
       
       return {
         statusCode: 200,
@@ -124,7 +124,7 @@ import {
     @ApiResponse({ status: 200, description: 'Eventos listados com sucesso' })
     @ApiResponse({ status: 403, description: 'Acesso negado' })
     async getUserEvents(@Param('id') id: number, @Request() req) {
-      if (req.user.role !== 'ADMIN' && req.user.userId !== id) {
+      if (req.user.role !== 'ADMIN' && req.user.id !== id) {
         throw new ForbiddenException('Você só pode visualizar seus próprios eventos');
       }
   

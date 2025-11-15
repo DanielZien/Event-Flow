@@ -70,7 +70,7 @@ export class AuthController {
   async refreshToken(@Request() req) {
     const payload = {
       email: req.user.email,
-      sub: req.user.userId,
+      sub: req.user.id,
       role: req.user.role,
     };
     
@@ -78,7 +78,7 @@ export class AuthController {
       statusCode: HttpStatus.OK,
       access_token: this.authService['jwtService'].sign(payload),
       user: {
-        id: req.user.userId,
+        id: req.user.id,
         email: req.user.email,
         role: req.user.role,
       },

@@ -6,13 +6,13 @@ import { EventFilter } from "src/interfaces/event.interface";
 export class EventsService {
     constructor(private prisma: PrismaService) { }
 
-    async create(eventData: any, userId: string) {
+    async create(eventData: any, id: number) {
         eventData.createdAt = new Date();
         eventData.ativo = true
         return this.prisma.event.create({
             data: {
                 ...eventData,
-                creatorId: userId
+                creatorId: id
             },
             include: {
                 creator: {
@@ -30,7 +30,10 @@ export class EventsService {
 
     async findAll(filter: EventFilter) {
         const where: any = { ativo: true };
-
+        
+        if(filter.categoria){
+            where.categoria = filter.categoria
+        }
         if (filter.id) {
             where.id = filter.id
         }

@@ -37,7 +37,12 @@ model Event {
   titulo           String
   descricao        String
   data             DateTime
+  hora_inicio      String
+  hora_fim         String
   localizacao      String
+  imagem           String
+  categoria        String
+  preco            Float
   ativo            Boolean
 
   creatorId        Int
