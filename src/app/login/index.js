@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import { Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, TouchableWithoutFeedback, View, Text, TextInput, ActivityIndicator, Image } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { styles } from '../../styles/estilosLogin';
 import { api } from "../../services/api2";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +14,15 @@ export default function Index() {
     const [linkCadastro, setLinkCadastro] = useState(true);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+
+    // Limpar campos quando a tela ganhar foco
+    useFocusEffect(
+      useCallback(() => {
+        setLogin('');
+        setSenha('');
+        setLoading(false);
+      }, [])
+    );
 
     // Função para traduzir mensagens do backend
     function traduzirMensagem(msg) {
