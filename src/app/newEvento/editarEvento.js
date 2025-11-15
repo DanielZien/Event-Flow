@@ -319,7 +319,7 @@ export default function EditarEvento() {
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.button, styles.cancelButton]} 
-          onPress={() => router.back()}
+          onPress={() => router.replace("/newEvento/eventosCadastrado")}
         >
           <Text style={styles.buttonText}>Cancelar</Text>
         </TouchableOpacity>

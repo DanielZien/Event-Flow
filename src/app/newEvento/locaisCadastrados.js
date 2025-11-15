@@ -115,7 +115,8 @@ export default function LocaisCadastrados() {
                                 style={styles.editButton}
                                 onPress={() => router.push({
                                     pathname: "/newEvento/cadastrarMapa",
-                                    params: { id: item.id }
+                                    // enviar o objeto completo como JSON para edição
+                                    params: { local: JSON.stringify(item) }
                                 })}
                             >
                                 <Text style={styles.editButtonText}>Editar</Text>

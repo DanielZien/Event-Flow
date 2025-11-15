@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from "react-native";
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -17,8 +17,10 @@ export default function CadastrarMapa() {
     const [marker, setMarker] = useState({ latitude: -9.97, longitude: -67.84 });
     const [locationPermission, setLocationPermission] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     const mapRef = useRef(null);
 
+    const { local: localParam } = useLocalSearchParams(); // agora usa useLocalSearchParams
     const router = useRouter();
 
     // Solicitar permissão de localização
@@ -31,6 +33,64 @@ export default function CadastrarMapa() {
             }
         })();
     }, []);
+
+    // Preencher campos se localParam estiver presente
+    useEffect(() => {
+        // Se veio param, preencher para edição; se não, resetar para criação de novo local
+        if (localParam) {
+            try {
+                const parsed = typeof localParam === "string" ? JSON.parse(localParam) : localParam;
+                setTitulo(parsed.titulo || "");
+                setRua(parsed.rua || "");
+                setNumero(parsed.numero || "");
+                setCidade(parsed.cidade || "");
+                setEstado(parsed.estado || "");
+                setCep(parsed.cep || "");
+                const lat = parsed.latitude ?? parsed.lat ?? -9.97;
+                const lng = parsed.longitude ?? parsed.lng ?? -67.84;
+                setLatitude(Number(lat));
+                setLongitude(Number(lng));
+                setMarker({ latitude: Number(lat), longitude: Number(lng) });
+                setEditingId(parsed.id); // guardamos id para update
+
+                // centralizar mapa no local editado
+                if (mapRef.current && mapRef.current.animateToRegion) {
+                    mapRef.current.animateToRegion({ latitude: Number(lat), longitude: Number(lng), latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
+                }
+            } catch (e) {
+                console.warn("Erro ao parsear param local:", e);
+            }
+        } else {
+            // Novo local: garantir campos vazios / valores padrão
+            setEditingId(null);
+            setTitulo("");
+            setRua("");
+            setNumero("");
+            setCidade("");
+            setEstado("");
+            setCep("");
+            const defaultLat = -9.97;
+            const defaultLng = -67.84;
+            setLatitude(defaultLat);
+            setLongitude(defaultLng);
+            setMarker({ latitude: defaultLat, longitude: defaultLng });
+            if (mapRef.current && mapRef.current.animateToRegion) {
+                mapRef.current.animateToRegion({ latitude: defaultLat, longitude: defaultLng, latitudeDelta: 0.05, longitudeDelta: 0.05 }, 300);
+            }
+        }
+    }, [localParam]);
+
+    // Sincroniza marker quando latitude/longitude mudam manualmente
+    useEffect(() => {
+        const lat = Number(latitude);
+        const lng = Number(longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            setMarker({ latitude: lat, longitude: lng });
+            if (mapRef.current && mapRef.current.animateToRegion) {
+                mapRef.current.animateToRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 300);
+            }
+        }
+    }, [latitude, longitude]);
 
     // Função para fazer reverse geocoding
     const obterEndereçoDoMapa = async (lat, lng) => {
@@ -76,29 +136,32 @@ export default function CadastrarMapa() {
 
         setSaving(true);
 
+        // montar objeto localNovo com os campos preenchidos
+        const localNovo = {
+            id: editingId || Date.now().toString(),
+            titulo,
+            rua,
+            numero,
+            cidade,
+            estado,
+            cep,
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+        };
+
         try {
-            const novoLocal = {
-                id: Date.now(),
-                titulo,
-                rua,
-                numero,
-                cidade,
-                estado,
-                cep,
-                latitude,
-                longitude,
-                criadoEm: new Date().toISOString(),
-            };
+            const raw = await AsyncStorage.getItem("locaisCadastrados");
+            const lista = raw ? JSON.parse(raw) : [];
 
-            // Obter locais já salvos
-            const locaisSalvos = await AsyncStorage.getItem("locaisCadastrados");
-            const locais = locaisSalvos ? JSON.parse(locaisSalvos) : [];
-
-            // Adicionar novo local
-            locais.push(novoLocal);
-
-            // Salvar atualizado
-            await AsyncStorage.setItem("locaisCadastrados", JSON.stringify(locais));
+            if (editingId) {
+                // substituir item existente
+                const novas = lista.map(l => (l.id === editingId ? localNovo : l));
+                await AsyncStorage.setItem("locaisCadastrados", JSON.stringify(novas));
+            } else {
+                // criar novo
+                lista.push(localNovo);
+                await AsyncStorage.setItem("locaisCadastrados", JSON.stringify(lista));
+            }
 
             Alert.alert("Sucesso", "Local cadastrado com sucesso!", [
                 {
@@ -217,8 +280,11 @@ export default function CadastrarMapa() {
                     <Text style={styles.label}>Latitude</Text>
                     <TextInput 
                         style={styles.input} 
-                        value={latitude.toString()} 
-                        onChangeText={(text) => setLatitude(parseFloat(text) || -9.97)}
+                        value={String(latitude)} 
+                        onChangeText={(text) => {
+                            const v = parseFloat(text);
+                            if (!isNaN(v)) setLatitude(v);
+                        }}
                         keyboardType="decimal-pad"
                     />
                 </View>
@@ -227,8 +293,11 @@ export default function CadastrarMapa() {
                     <Text style={styles.label}>Longitude</Text>
                     <TextInput 
                         style={styles.input} 
-                        value={longitude.toString()} 
-                        onChangeText={(text) => setLongitude(parseFloat(text) || -67.84)}
+                        value={String(longitude)} 
+                        onChangeText={(text) => {
+                            const v = parseFloat(text);
+                            if (!isNaN(v)) setLongitude(v);
+                        }}
                         keyboardType="decimal-pad"
                     />
                 </View>
