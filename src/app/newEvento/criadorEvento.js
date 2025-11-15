@@ -48,9 +48,10 @@ export default function CadastrarEvento() {
       data: data.toISOString(), // ✅ formato ISO
       localizacao: local || `${latitude}, ${longitude}`,
       hora_inicio: horaInicio.toISOString(), // também ISO
-      hora_fim: horaFim.toISOString(),       // também ISO
+           // também ISO
       categoria,
       imagem: imagens[0] || "",
+      hora_fim: horaFim.toISOString(),  
       preco: 0
     };
 
