@@ -35,7 +35,7 @@ function CustomDrawerContent(props) {
     if (user) {
       await sessionService.registrarSaida(user.id);
     }
-    await AsyncStorage.removeItem("toekn");
+    await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
     setUser(null);
     setRole(null);
@@ -76,6 +76,10 @@ function CustomDrawerContent(props) {
         <Text style={{ fontSize: 16 }}>Home</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity style={{ marginVertical: 10 }} onPress={() => navigation.navigate("evento/notificacao")}>
+        <Text style={{ fontSize: 16 }}>Notificação</Text>
+      </TouchableOpacity>
+
       {/* Opções APENAS para ADMIN */}
       {role === "ADMIN" && (
         <>
@@ -96,16 +100,17 @@ function CustomDrawerContent(props) {
               📍 Locais Cadastrados
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={{ marginVertical: 10 }} 
+            onPress={() => navigation.navigate("evento/categorias")}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
+              📂 Categorias
+            </Text>
+          </TouchableOpacity>
         </>
       )}
-
-      <TouchableOpacity style={{ marginVertical: 10 }} onPress={() => navigation.navigate("evento/notificacao")}>
-        <Text style={{ fontSize: 16 }}>Notificação</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={{ marginVertical: 10 }} onPress={() => navigation.navigate("evento/categorias")}>
-        <Text style={{ fontSize: 16 }}>Categorias</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity
         style={{ marginVertical: 10 }}
@@ -159,7 +164,6 @@ export default function RootLayout() {
         <Drawer.Screen name="evento/home" options={{ title: "Home" }} />
         <Drawer.Screen name="evento/conta" options={{ title: "Minha Conta" }} />
         <Drawer.Screen name="evento/notificacao" options={{ title: "Notificação" }} />
-        <Drawer.Screen name="evento/categorias" options={{ title: "Categorias" }} />
         <Drawer.Screen name="evento/termo" options={{ title: "Termos" }} />
 
         {/* Rotas APENAS para ADMIN */}
@@ -180,6 +184,10 @@ export default function RootLayout() {
             <Drawer.Screen 
               name="newEvento/locaisCadastrados" 
               options={{ title: "Locais Cadastrados" }} 
+            />
+            <Drawer.Screen 
+              name="evento/categorias" 
+              options={{ title: "Categorias" }} 
             />
           </>
         )}

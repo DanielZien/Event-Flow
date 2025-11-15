@@ -1,111 +1,208 @@
 import { StyleSheet } from "react-native";
 
-const shadowBox = {
-  elevation: 3,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-};
-
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" ,paddingBottom: 35, },
-
-  header: { padding: 20, marginTop: 1, alignSelf: "center" },
-  headerText: { padding: 20, marginTop: 20, alignSelf: "center" },
-  welcome: { fontSize: 20, marginBottom: 10, alignSelf: "center" },
-  search: {
-    backgroundColor: "#dddbdbff",
-    padding: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 15,
-    minWidth: 350,
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
   },
-  sectionTitle: { fontSize: 18, marginBottom: 8, alignSelf: "center" },
-  divider: { borderBottomColor: "#ccc", borderBottomWidth: 1 },
-
-  mapaCard: {
-    marginHorizontal: 20,
-    marginTop: -10,
-    height: 120,
-    borderRadius: 20,
-    overflow: "hidden",
+  header: {
     backgroundColor: "#fff",
-    ...shadowBox,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
-
+  welcome: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+  },
+  search: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+    color: "#333",
+    fontSize: 14,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  textDestaq: {
+    color: "#08007B",
+    fontWeight: "bold",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginVertical: 12,
+  },
+  filterInfo: {
+    backgroundColor: "#e3f2fd",
+    padding: 10,
+    borderRadius: 6,
+    marginVertical: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  filterText: {
+    fontSize: 12,
+    color: "#0d47a1",
+    fontWeight: "600",
+    flex: 1,
+  },
+  clearFilterText: {
+    fontSize: 12,
+    color: "#d32f2f",
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+  },
+  resultCount: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 12,
+    fontWeight: "600",
+  },
+  mapaCard: {
+    height: 200,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginHorizontal: 16,
+    marginVertical: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   mapaFull: {
-    flex: 1, // ocupa toda a tela
+    flex: 1,
+    position: "relative",
   },
-
+  eventCountBadge: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    backgroundColor: "#08007B",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  eventCountText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  closeText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    marginBottom: 16,
+    borderRadius: 12,
     overflow: "hidden",
-    ...shadowBox,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   image: {
     width: "100%",
-    height: 180,
+    height: 160,
+    backgroundColor: "#f0f0f0",
+  },
+  categoryBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "#08007B",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  categoryText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   info: {
     padding: 12,
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between", // elementos nas extremidades
+    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
   },
   title: {
     fontSize: 16,
     fontWeight: "bold",
-    flex: 1, // ocupa espaço à esquerda
+    color: "#333",
   },
   date: {
-    fontSize: 14,
-    color: "#666",
-  },
-  type: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#666",
     marginBottom: 6,
   },
+  location: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 8,
+  },
   price: {
     fontSize: 14,
-    color: "#333",
+    fontWeight: "bold",
+    color: "#08007B",
   },
   detailsButton: {
-    paddingHorizontal: 36,
-    paddingVertical: 4,
     backgroundColor: "#08007B",
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   detailsText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "white", // corrigido: removida duplicidade
-  },
-  textDestaq: {
-    fontWeight: "bold",paddingTop:100,
-  },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 6,
-    borderRadius: 20,
-    width: 40,
-    zIndex: 10,
-    alignItems: "center",
-  },
-  closeText: {
     color: "#fff",
-    fontSize: 16,
     fontWeight: "bold",
+    fontSize: 12,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  resetButton: {
+    backgroundColor: "#08007B",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  resetText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

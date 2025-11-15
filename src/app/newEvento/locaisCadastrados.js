@@ -1,168 +1,192 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList } from "react-native";
-import { useState } from "react";
-import { useRouter } from "expo-router";
-import MapView, { Marker } from "react-native-maps";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { useState, useEffect } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCallback } from "react";
 
 export default function LocaisCadastrados() {
-  const router = useRouter();
+    const [locais, setLocais] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-  const [locais, setLocais] = useState([
-    {
-      id: "1",
-      titulo: "Auditório Central",
-      latitude: -9.974,
-      longitude: -67.824,
-    },
-    {
-      id: "2",
-      titulo: "Sala 101",
-      latitude: -9.975,
-      longitude: -67.825,
-    },
-    {
-      id: "3",
-      titulo: "Teatro Municipal",
-      latitude: -9.976,
-      longitude: -67.826,
-    },
-  ]);
+    // Carregar locais ao focar na tela
+    useFocusEffect(
+        useCallback(() => {
+            carregarLocais();
+        }, [])
+    );
 
-  const excluirLocal = (id) => {
-    setLocais(locais.filter((l) => l.id !== id));
-  };
+    const carregarLocais = async () => {
+        try {
+            setLoading(true);
+            const locaisSalvos = await AsyncStorage.getItem("locaisCadastrados");
+            const lista = locaisSalvos ? JSON.parse(locaisSalvos) : [];
+            setLocais(lista);
+        } catch (error) {
+            console.error("Erro ao carregar locais:", error);
+            Alert.alert("Erro", "Não foi possível carregar os locais");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const editarLocal = (id) => {
-    alert(`Editar local ${id}`);
-  };
+    const excluirLocal = (id) => {
+        Alert.alert("Excluir Local", "Tem certeza que deseja excluir este local?", [
+            { text: "Cancelar", style: "cancel" },
+            {
+                text: "Excluir",
+                style: "destructive",
+                onPress: async () => {
+                    try {
+                        const locaisFiltrados = locais.filter(l => l.id !== id);
+                        await AsyncStorage.setItem("locaisCadastrados", JSON.stringify(locaisFiltrados));
+                        setLocais(locaisFiltrados);
+                    } catch (error) {
+                        console.error("Erro ao excluir local:", error);
+                        Alert.alert("Erro", "Não foi possível excluir o local");
+                    }
+                },
+            },
+        ]);
+    };
 
-  const criarLocal = () => {
-    router.push("/newEvento/cadastrarMapa");
-  };
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#08007B" />
+            </View>
+        );
+    }
 
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Listagem de Locais</Text>
-        <TextInput style={styles.search} placeholder="Pesquise Locais..." />
-        <TouchableOpacity style={styles.createButton} onPress={criarLocal}>
-          <Text style={styles.createText}>Criar Local +</Text>
-        </TouchableOpacity>
-        <Text style={styles.subtitle}>
-          Mostrando {locais.length} de 45 Locais Cadastrados
-        </Text>
-      </View>
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.title}>Locais Cadastrados</Text>
+                <TouchableOpacity 
+                    style={styles.createButton}
+                    onPress={() => router.push("/newEvento/cadastrarMapa")}
+                >
+                    <Text style={styles.createText}>Novo Local +</Text>
+                </TouchableOpacity>
+                <Text style={styles.subtitle}>
+                    Mostrando {locais.length} local{locais.length !== 1 ? "is" : ""}
+                </Text>
+            </View>
 
-      {/* Lista de locais */}
-      <FlatList
-        data={locais}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            {/* Mapa com botão Excluir flutuante */}
-            <View>
-              <MapView
-                style={styles.map}
-                initialRegion={{
-                  latitude: item.latitude,
-                  longitude: item.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                rotateEnabled={false}
-              >
-                <Marker
-                  coordinate={{ latitude: item.latitude, longitude: item.longitude }}
-                  title={item.titulo}
+            {locais.length === 0 ? (
+                <View style={styles.emptyState}>
+                    <Text style={styles.emptyText}>Nenhum local cadastrado</Text>
+                    <TouchableOpacity 
+                        style={styles.emptyButton}
+                        onPress={() => router.push("/newEvento/cadastrarMapa")}
+                    >
+                        <Text style={styles.emptyButtonText}>Cadastrar Primeiro Local</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <FlatList
+                    data={locais}
+                    keyExtractor={(item) => item.id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({ item }) => (
+                        <View style={styles.card}>
+                            <View style={styles.cardHeader}>
+                                <View style={styles.cardInfo}>
+                                    <Text style={styles.cardTitle}>{item.titulo}</Text>
+                                    <Text style={styles.cardSubtitle}>
+                                        {item.rua} {item.numero}
+                                    </Text>
+                                    <Text style={styles.cardSubtitle}>
+                                        {item.cidade}, {item.estado} - {item.cep}
+                                    </Text>
+                                    <Text style={styles.cardCoords}>
+                                        📍 {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity 
+                                    style={styles.deleteButton}
+                                    onPress={() => excluirLocal(item.id)}
+                                >
+                                    <Text style={styles.deleteText}>✖</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <TouchableOpacity 
+                                style={styles.editButton}
+                                onPress={() => router.push({
+                                    pathname: "/newEvento/cadastrarMapa",
+                                    params: { id: item.id }
+                                })}
+                            >
+                                <Text style={styles.editButtonText}>Editar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                    contentContainerStyle={{ paddingBottom: 20 }}
                 />
-              </MapView>
-
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => excluirLocal(item.id)}
-              >
-                <Text style={styles.deleteText}>Excluir Local ✖</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Informações */}
-            <View style={styles.info}>
-              <Text style={styles.localTitle}>{item.titulo}</Text>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.edit]}
-                  onPress={() => editarLocal(item.id)}
-                >
-                  <Text style={styles.buttonText}>Editar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.view]}
-                  onPress={() => alert(`Ver local ${item.id}`)}
-                >
-                  <Text style={styles.buttonText}>Ver</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
-      />
-    </View>
-  );
+            )}
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 16 },
-  header: { marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
-  search: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-  },
-  createButton: {
-    backgroundColor: "#08007B",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  createText: { color: "#fff", fontWeight: "bold" },
-  subtitle: { fontSize: 14, color: "gray", marginBottom: 10 },
-  card: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 10,
-    marginBottom: 15,
-    overflow: "hidden",
-    elevation: 2,
-  },
-  map: { width: "100%", height: 150 },
-  info: { padding: 10 },
-  localTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 5, color: "#08007B" },
-  deleteButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "#e53935",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-  },
-  deleteText: { color: "#fff", fontWeight: "bold" },
-  actions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 10 },
-  actionButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  edit: { backgroundColor: "#fbc02d" },
-  view: { backgroundColor: "#08007B" },
-  buttonText: { color: "#fff", fontWeight: "bold" },
+    container: { flex: 1, backgroundColor: "#f5f5f5" },
+    header: { backgroundColor: "#fff", padding: 20, borderBottomWidth: 1, borderColor: "#ddd" },
+    title: { fontSize: 22, fontWeight: "bold", marginBottom: 10, color: "#08007B" },
+    createButton: {
+        backgroundColor: "#08007B",
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        marginBottom: 10,
+        alignItems: "center",
+    },
+    createText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+    subtitle: { fontSize: 12, color: "#999" },
+
+    emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
+    emptyText: { fontSize: 16, color: "#999", marginBottom: 20 },
+    emptyButton: {
+        backgroundColor: "#08007B",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+    },
+    emptyButtonText: { color: "#fff", fontWeight: "bold" },
+
+    card: {
+        backgroundColor: "#fff",
+        marginHorizontal: 20,
+        marginVertical: 10,
+        borderRadius: 10,
+        padding: 15,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+    cardInfo: { flex: 1 },
+    cardTitle: { fontSize: 18, fontWeight: "bold", color: "#333", marginBottom: 5 },
+    cardSubtitle: { fontSize: 14, color: "#666", marginBottom: 3 },
+    cardCoords: { fontSize: 12, color: "#999", marginTop: 5 },
+
+    deleteButton: {
+        backgroundColor: "#e53935",
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    deleteText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+
+    editButton: {
+        backgroundColor: "#08007B",
+        marginTop: 12,
+        paddingVertical: 10,
+        borderRadius: 6,
+        alignItems: "center",
+    },
+    editButtonText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
 });

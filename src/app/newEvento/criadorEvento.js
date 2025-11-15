@@ -5,6 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import MapView, { Marker } from "react-native-maps";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../../services/api2";
 import * as Location from "expo-location";
 
@@ -12,7 +13,9 @@ export default function CadastrarEvento() {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [categoriasList, setCategoriasList] = useState([]);
   const [local, setLocal] = useState("");
+  const [locaisCadastrados, setLocaisCadastrados] = useState([]);
   const [rua, setRua] = useState("");
   const [numero, setNumero] = useState("");
   const [cidade, setCidade] = useState("");
@@ -44,6 +47,28 @@ export default function CadastrarEvento() {
       }
     })();
   }, []);
+
+  // Carregar categorias do AsyncStorage
+  const carregarCategorias = async () => {
+    try {
+      const categoriasSalvas = await AsyncStorage.getItem("categorias");
+      const lista = categoriasSalvas ? JSON.parse(categoriasSalvas) : [];
+      setCategoriasList(lista);
+    } catch (error) {
+      console.error("Erro ao carregar categorias:", error);
+    }
+  };
+
+  // Carregar locais do AsyncStorage
+  const carregarLocais = async () => {
+    try {
+      const locaisSalvos = await AsyncStorage.getItem("locaisCadastrados");
+      const lista = locaisSalvos ? JSON.parse(locaisSalvos) : [];
+      setLocaisCadastrados(lista);
+    } catch (error) {
+      console.error("Erro ao carregar locais:", error);
+    }
+  };
   
   // Limpa o formulário sempre que a tela for focada
   useFocusEffect(
@@ -67,6 +92,8 @@ export default function CadastrarEvento() {
       setShowHoraInicio(false);
       setShowHoraFim(false);
       setSaving(false);
+      carregarCategorias(); // Recarregar categorias ao focar
+      carregarLocais(); // Recarregar locais ao focar
       return () => {};
     }, [])
   );
@@ -120,6 +147,33 @@ export default function CadastrarEvento() {
     obterEndereçoDoMapa(lat, lng);
   };
 
+  // Ao selecionar um local cadastrado
+  const handleSelectLocal = (localId) => {
+    setLocal(localId);
+    
+    if (localId) {
+      const localSelecionado = locaisCadastrados.find(l => l.id.toString() === localId);
+      
+      if (localSelecionado) {
+        // Preencher campos automaticamente
+        setRua(localSelecionado.rua);
+        setNumero(localSelecionado.numero);
+        setCidade(localSelecionado.cidade);
+        setEstado(localSelecionado.estado);
+        setCep(localSelecionado.cep);
+        setLatitude(localSelecionado.latitude);
+        setLongitude(localSelecionado.longitude);
+      }
+    } else {
+      // Limpar campos se desselecionar
+      setRua("");
+      setNumero("");
+      setCidade("");
+      setEstado("");
+      setCep("");
+    }
+  };
+
   const salvarEvento = async () => {
     setSaving(true);
     const imagensString = imagens.filter(img => img).join("|");
@@ -129,7 +183,7 @@ export default function CadastrarEvento() {
       titulo: nome,
       descricao,
       data: data.toISOString(),
-      localizacao: enderecoCompleto || local || `${latitude}, ${longitude}`,
+      localizacao: enderecoCompleto || `${latitude}, ${longitude}`,
       hora_inicio: horaInicio.toISOString(),
       categoria,
       imagem: imagensString || "",
@@ -199,10 +253,14 @@ export default function CadastrarEvento() {
           <Text style={styles.label}>Categoria</Text>
           <View style={styles.pickerWrapper}>
             <Picker selectedValue={categoria} onValueChange={(itemValue) => setCategoria(itemValue)}>
-              <Picker.Item label="Selecione" value="" />
-              <Picker.Item label="Palestra" value="Palestra" />
-              <Picker.Item label="Workshop" value="Workshop" />
-              <Picker.Item label="Show" value="Show" />
+              <Picker.Item label="Selecione uma categoria" value="" />
+              {categoriasList.map((cat) => (
+                <Picker.Item 
+                  key={cat.id} 
+                  label={cat.nome} 
+                  value={cat.nome} 
+                />
+              ))}
             </Picker>
           </View>
         </View>
@@ -269,11 +327,15 @@ export default function CadastrarEvento() {
         <View style={styles.field}>
           <Text style={styles.label}>Locais Cadastrados</Text>
           <View style={styles.pickerWrapper}>
-            <Picker selectedValue={local} onValueChange={(itemValue) => setLocal(itemValue)}>
-              <Picker.Item label="Selecione" value="" />
-              <Picker.Item label="Auditório Central" value="Auditório Central" />
-              <Picker.Item label="Sala 101" value="Sala 101" />
-              <Picker.Item label="Teatro Municipal" value="Teatro Municipal" />
+            <Picker selectedValue={local} onValueChange={handleSelectLocal}>
+              <Picker.Item label="Selecione um local" value="" />
+              {locaisCadastrados.map((loc) => (
+                <Picker.Item 
+                  key={loc.id} 
+                  label={loc.titulo} 
+                  value={loc.id.toString()} 
+                />
+              ))}
             </Picker>
           </View>
         </View>
@@ -389,7 +451,7 @@ export default function CadastrarEvento() {
             <Text style={styles.buttonText}>Salvar</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => alert("Cancelado")}>
+        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => router.back()}>
           <Text style={styles.buttonText}>Cancelar</Text>
         </TouchableOpacity>
       </View>
