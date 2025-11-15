@@ -1,12 +1,43 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Image,ActivityIndicator  } from 'react-native';
-import { useState,useEffect } from "react";
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator, Alert } from 'react-native';
+import { useState, useEffect } from "react";
 import { useRouter } from 'expo-router';
 import { api } from "../../services/api2";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+
+
 
 export default function NewEvento() {
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const FALLBACK_IMAGE = "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg";
+
+  // helper para retornar a primeira imagem da string concatenada
+  const getFirstImage = (imagem) => {
+    if (!imagem) return FALLBACK_IMAGE;
+    if (typeof imagem !== "string") return FALLBACK_IMAGE;
+    // suporta separador '|' ou ',' ou apenas uma URL
+    const sep = imagem.includes("|") ? "|" : (imagem.includes(",") ? "," : null);
+    const parts = sep ? imagem.split(sep) : [imagem];
+    const first = parts.map(p => p.trim()).filter(Boolean)[0];
+    return first || FALLBACK_IMAGE;
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      async function carregarEventos() {
+        try {
+          const response = await api.get("/events");
+          setEventos(response.data.events);
+        } catch (error) {
+          console.error("Erro ao carregar eventos:", error.response?.data || error.message);
+        }
+      }
+      carregarEventos();
+    }, [])
+  );
 
   // Buscar eventos da API
   useEffect(() => {
@@ -25,11 +56,26 @@ export default function NewEvento() {
 
   // Funções de exemplo
   const excluirEvento = (id) => {
-    setEventos(eventos.filter((e) => e.id !== id));
+    Alert.alert("Excluir evento", "Tem certeza que deseja excluir este evento?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await api.delete(`/events/${id}`);
+            setEventos((prev) => prev.filter((e) => e.id !== id));
+          } catch (error) {
+            console.error("Erro ao excluir evento:", error.response?.data || error.message);
+            Alert.alert("Erro", "Não foi possível excluir o evento.");
+          }
+        },
+      },
+    ]);
   };
 
   const editarEvento = (id) => {
-    alert(`Editar evento ${id}`);
+    router.push({ pathname: "/newEvento/editarEvento", params: { id: item.id } })
   };
 
   const criarEvento = () => {
@@ -64,9 +110,7 @@ export default function NewEvento() {
               <View>
                 <Image
                   source={{
-                    uri:
-                      item.imagem ||
-                      "https://agenciafivemira.com.br/wp-content/uploads/2025/02/evento-corporativo-foto-de-capa.jpg",
+                    uri: getFirstImage(item.imagem),
                   }}
                   style={styles.image}
                 />
@@ -102,7 +146,7 @@ export default function NewEvento() {
                   </View>
 
                   <View style={styles.actions}>
-                    <TouchableOpacity style={[styles.actionButton, styles.edit]} onPress={() => editarEvento(item.id)}>
+                    <TouchableOpacity style={[styles.actionButton, styles.edit]} onPress={() => router.push({ pathname: "/newEvento/editarEvento", params: { id: item.id } })}>
                       <Text style={styles.buttonText}>Editar</Text>
                     </TouchableOpacity>
 
@@ -195,28 +239,28 @@ const styles = StyleSheet.create({
   view: { backgroundColor: "#08007B" },
   buttonText: { color: "#fff", fontWeight: "bold" },
   row: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-},
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
 
-rowBottom: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "flex-end",
-  marginTop: 10,
-},
+  rowBottom: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginTop: 10,
+  },
 
-ingressoLabel: {
-  fontSize: 14,
-  fontWeight: "bold",
-  color: "#333",
-},
+  ingressoLabel: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
 
-price: {
-  fontSize: 14,
-  fontWeight: "bold",
-  color: "#333",
-  marginTop: 2,
-},
+  price: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 2,
+  },
 });

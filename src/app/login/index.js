@@ -1,11 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, TouchableWithoutFeedback, View, Text, TextInput, ActivityIndicator,Image } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, TouchableWithoutFeedback, View, Text, TextInput, ActivityIndicator, Image } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { styles } from '../../styles/estilosLogin';
-import { api } from "../../services/api2"; // seu serviço Axios
+import { api } from "../../services/api2";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { sessionService } from '../../services/sessionService';
 
 export default function Index() {
     const [login, setLogin] = useState('');
@@ -45,6 +45,8 @@ export default function Index() {
                 await AsyncStorage.setItem("token", response.data.access_toekn);
                 await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
 
+                // Registrar entrada da sessão
+                await sessionService.registrarEntrada(response.data.user);
 
                 if (response.data.user.role === "ADMIN") {
                     router.replace('/newEvento/eventosCadastrado');

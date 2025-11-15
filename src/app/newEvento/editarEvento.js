@@ -1,25 +1,22 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from "react-native";
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter, useFocusEffect } from "expo-router";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { useState, useEffect } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import MapView, { Marker } from "react-native-maps";
+import MapView from "react-native-maps";
 import { api } from "../../services/api2";
-import * as Location from "expo-location";
 
-export default function CadastrarEvento() {
+export default function EditarEvento() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("");
   const [local, setLocal] = useState("");
-  const [rua, setRua] = useState("");
-  const [numero, setNumero] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [estado, setEstado] = useState("");
-  const [cep, setCep] = useState("");
-  const [latitude, setLatitude] = useState(-9.97);
-  const [longitude, setLongitude] = useState(-67.84);
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [imagens, setImagens] = useState([]);
 
   const [data, setData] = useState(new Date());
@@ -30,46 +27,50 @@ export default function CadastrarEvento() {
   const [showHoraInicio, setShowHoraInicio] = useState(false);
   const [showHoraFim, setShowHoraFim] = useState(false);
 
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [locationPermission, setLocationPermission] = useState(null);
-  const mapRef = useRef(null);
 
-  // Solicitar permissão de localização ao montar o componente
+  // Carregar evento ao montar
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setLocationPermission(status === "granted");
-      if (status !== "granted") {
-        Alert.alert("Permissão negada", "Você precisa permitir acesso à localização para usar o geocoding.");
+    if (id) {
+      carregarEvento();
+    }
+  }, [id]);
+
+  const carregarEvento = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/events/${id}`);
+      const evento = response.data;
+
+      setNome(evento.titulo || "");
+      setDescricao(evento.descricao || "");
+      setCategoria(evento.categoria || "");
+      setLocal(evento.localizacao || "");
+      setData(new Date(evento.data));
+      setHoraInicio(new Date(evento.hora_inicio));
+      setHoraFim(new Date(evento.hora_fim));
+      
+      // Separar imagens pelo separador |
+      let imagensCadastradas = [];
+      if (evento.imagem && typeof evento.imagem === 'string') {
+        imagensCadastradas = evento.imagem.split("|").filter(img => img.trim());
       }
-    })();
-  }, []);
-  
-  // Limpa o formulário sempre que a tela for focada
-  useFocusEffect(
-    useCallback(() => {
-      setNome("");
-      setDescricao("");
-      setCategoria("");
-      setLocal("");
-      setRua("");
-      setNumero("");
-      setCidade("");
-      setEstado("");
-      setCep("");
-      setLatitude(-9.97);
-      setLongitude(-67.84);
-      setImagens([]);
-      setData(new Date());
-      setHoraInicio(new Date());
-      setHoraFim(new Date());
-      setShowData(false);
-      setShowHoraInicio(false);
-      setShowHoraFim(false);
-      setSaving(false);
-      return () => {};
-    }, [])
-  );
+      
+      setImagens(imagensCadastradas.slice(0, 4));
+
+      if (evento.localizacao && evento.localizacao.includes(",")) {
+        const [lat, lng] = evento.localizacao.split(",").map(s => s.trim());
+        setLatitude(lat);
+        setLongitude(lng);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar evento:", error.response?.data || error.message);
+      alert("Erro ao carregar evento");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const escolherImagem = async (index) => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -84,62 +85,26 @@ export default function CadastrarEvento() {
     }
   };
 
-  const router = useRouter();
-
-  // Função para fazer reverse geocoding
-  const obterEndereçoDoMapa = async (lat, lng) => {
-    if (!locationPermission) {
-      console.warn("Permissão de localização não concedida");
-      return;
-    }
-
-    try {
-      const resultado = await Location.reverseGeocodeAsync({
-        latitude: lat,
-        longitude: lng,
-      });
-      
-      if (resultado && resultado.length > 0) {
-        const endereco = resultado[0];
-        setRua(endereco.street || "");
-        setNumero(endereco.streetNumber || "");
-        setCidade(endereco.city || "");
-        setEstado(endereco.region || "");
-        setCep(endereco.postalCode || "");
-      }
-    } catch (error) {
-      console.error("Erro ao obter endereço:", error);
-    }
-  };
-
-  // Handle ao pressionar no mapa
-  const handleMapPress = (event) => {
-    const { latitude: lat, longitude: lng } = event.nativeEvent.coordinate;
-    setLatitude(lat);
-    setLongitude(lng);
-    obterEndereçoDoMapa(lat, lng);
-  };
-
   const salvarEvento = async () => {
-    setSaving(true);
+    // Concatenar imagens com separador
     const imagensString = imagens.filter(img => img).join("|");
-    const enderecoCompleto = `${rua} ${numero}, ${cidade}, ${estado}`.trim();
 
-    const novoEvento = {
+    const eventoAtualizado = {
       titulo: nome,
       descricao,
       data: data.toISOString(),
-      localizacao: enderecoCompleto || local || `${latitude}, ${longitude}`,
+      localizacao: local || `${latitude}, ${longitude}`,
       hora_inicio: horaInicio.toISOString(),
       categoria,
-      imagem: imagensString || "",
+      imagem: imagensString || "", // String com imagens separadas por |
       hora_fim: horaFim.toISOString(),
-      preco: 0
-    }; 
+      preco: 0,
+    };
 
+    setSaving(true);
     try {
-      const response = await api.post("/events", novoEvento);
-      alert("Evento cadastrado com sucesso!");
+      await api.patch(`/events/${id}`, eventoAtualizado);
+      alert("Evento atualizado com sucesso!");
       router.replace("/newEvento/eventosCadastrado");
     } catch (error) {
       console.error("Erro ao salvar evento:", error.response?.data || error.message);
@@ -149,6 +114,15 @@ export default function CadastrarEvento() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#08007B" />
+        <Text style={{ marginTop: 10 }}>Carregando evento...</Text>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView
@@ -156,7 +130,7 @@ export default function CadastrarEvento() {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.header}>Cadastrar Evento</Text>
+        <Text style={styles.header}>Editar Evento</Text>
 
         {/* Upload até 4 imagens */}
         <View style={styles.uploadGrid}>
@@ -278,83 +252,33 @@ export default function CadastrarEvento() {
           </View>
         </View>
 
-        {/* Mapa Interativo */}
         <View style={styles.field}>
-          <Text style={styles.label}>Ou Marque no Mapa o Local Desejado</Text>
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            initialRegion={{
-              latitude: latitude,
-              longitude: longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-            onPress={handleMapPress}
+          <Text style={styles.label}>Ou</Text>
+          <Text style={styles.label}>Marque no Mapa o Local Desejado</Text>
+
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.mapWrapper}
+            onPress={() => router.push("/newEvento/locaisCadastrados")}
           >
-            <Marker
-              coordinate={{ latitude, longitude }}
-              title="Localização do Evento"
-              description={`${rua} ${numero}, ${cidade}, ${estado}`}
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: -9.97,
+                longitude: -67.84,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
             />
-          </MapView>
-        </View>
 
-        {/* Endereço - Dividido em 5 campos */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Rua</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nome da rua"
-            value={rua}
-            onChangeText={setRua}
-          />
-        </View>
-
-        <View style={styles.row}>
-          <View style={[styles.field, { flex: 1, marginRight: 8 }]}>
-            <Text style={styles.label}>Número</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nº"
-              value={numero}
-              onChangeText={setNumero}
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={[styles.field, { flex: 1, marginLeft: 8 }]}>
-            <Text style={styles.label}>CEP</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="00000-000"
-              value={cep}
-              onChangeText={setCep}
-            />
-          </View>
-        </View>
-
-        <View style={styles.row}>
-          <View style={[styles.field, { flex: 2, marginRight: 8 }]}>
-            <Text style={styles.label}>Cidade</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Cidade"
-              value={cidade}
-              onChangeText={setCidade}
-            />
-          </View>
-
-          <View style={[styles.field, { flex: 1, marginLeft: 8 }]}>
-            <Text style={styles.label}>Estado</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="UF"
-              value={estado}
-              onChangeText={setEstado}
-              maxLength={2}
-            />
-          </View>
+            {/* Elemento flutuante no centro */}
+            <View style={styles.markerCenter}>
+              <Text style={styles.markerIcon}>📍Marque no Mapa</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Latitude e Longitude */}
@@ -363,8 +287,8 @@ export default function CadastrarEvento() {
           <TextInput
             style={styles.input}
             placeholder="Ex: -9.9762"
-            value={latitude.toString()}
-            onChangeText={(text) => setLatitude(parseFloat(text) || -9.97)}
+            value={latitude}
+            onChangeText={setLatitude}
             keyboardType="decimal-pad"
           />
         </View>
@@ -373,8 +297,8 @@ export default function CadastrarEvento() {
           <TextInput
             style={styles.input}
             placeholder="Ex: -67.8413"
-            value={longitude.toString()}
-            onChangeText={(text) => setLongitude(parseFloat(text) || -67.84)}
+            value={longitude}
+            onChangeText={setLongitude}
             keyboardType="decimal-pad"
           />
         </View>
@@ -382,14 +306,21 @@ export default function CadastrarEvento() {
 
       {/* Footer fixo */}
       <View style={styles.footer}>
-        <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={salvarEvento} disabled={saving}>
+        <TouchableOpacity 
+          style={[styles.button, styles.saveButton]} 
+          onPress={salvarEvento}
+          disabled={saving}
+        >
           {saving ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.buttonText}>Salvar</Text>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => alert("Cancelado")}>
+        <TouchableOpacity 
+          style={[styles.button, styles.cancelButton]} 
+          onPress={() => router.back()}
+        >
           <Text style={styles.buttonText}>Cancelar</Text>
         </TouchableOpacity>
       </View>
@@ -398,9 +329,11 @@ export default function CadastrarEvento() {
 }
 
 const styles = StyleSheet.create({
+  // Container e cabeçalho
   container: { flex: 1, backgroundColor: "#fff", padding: 20 },
   header: { fontSize: 22, fontWeight: "bold", marginBottom: 20, color: "#08007B" },
 
+  // Upload
   uploadGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -419,6 +352,7 @@ const styles = StyleSheet.create({
   uploadText: { color: "#999", fontSize: 16 },
   image: { width: "100%", height: "100%", borderRadius: 10 },
 
+  // Campos
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: "bold", marginBottom: 6, color: "#333" },
   input: {
@@ -428,6 +362,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
 
+  // Picker wrapper
   pickerWrapper: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -435,8 +370,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
+  // Linha horizontal
   row: { flexDirection: "row", justifyContent: "space-between" },
 
+  // Footer fixo
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -457,10 +394,29 @@ const styles = StyleSheet.create({
   cancelButton: { backgroundColor: "#e53935" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
+  mapWrapper: {
+    width: "100%",
+    height: 100,
+    borderRadius: 10,
+    overflow: "hidden",
+    marginTop: 10,
+  },
   map: {
     width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
+    height: "100%",
+  },
+
+  markerCenter: {
+    position: "absolute",
+    top: "50%",
+    left: "27%",
+    transform: [{ translateX: -15 }, { translateY: -15 }],
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 20,
+    padding: 9,
+    elevation: 4,
+  },
+  markerIcon: {
+    fontSize: 20,
   },
 });
