@@ -146,7 +146,7 @@ function CustomDrawerContent(props) {
             onPress={() => router.replace("/newEvento/eventosCadastrado")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-              📋 Eventos Cadastrados
+               Eventos Cadastrados
             </Text>
           </TouchableOpacity>
 
@@ -155,7 +155,7 @@ function CustomDrawerContent(props) {
             onPress={() => router.replace("/newEvento/locaisCadastrados")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-              📍 Locais Cadastrados
+               Locais Cadastrados
             </Text>
           </TouchableOpacity>
 
@@ -164,7 +164,7 @@ function CustomDrawerContent(props) {
             onPress={() => navigation.navigate("evento/categorias")}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "#08007B" }}>
-              📂 Categorias
+               Categorias
             </Text>
           </TouchableOpacity>
         </>
