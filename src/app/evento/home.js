@@ -189,7 +189,6 @@ export default function Home() {
               let Loc = event.localizacao.split("|")[1]
               let LAT = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[1])
               let LNG = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[2])
-              console.log(LAT, LNG)
               return (
               <Marker
                 key={event.id}
@@ -228,7 +227,6 @@ export default function Home() {
               let Loc = event.localizacao.split("|")[1]
               let LAT = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[1])
               let LNG = Number(Loc.match(/(-?\d+(?:\.\d+)?)[^\d-.-]+(-?\d+(?:\.\d+)?)/)[2])
-              console.log(LAT, LNG)
               return (
               <Marker
                 key={event.id}

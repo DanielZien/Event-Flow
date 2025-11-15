@@ -5,10 +5,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, Text, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { router, useRouter } from "expo-router";
 import { sessionService } from "../services/sessionService";
+import { api } from "../services/api2";
 
 function CustomDrawerContent(props) {
   const { navigation } = props;
   const [user, setUser] = useState(null);
+  const [user2, setUser2] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +57,9 @@ function CustomDrawerContent(props) {
         }
 
         if (mounted) {
+          let response = await api.get('/users/profile')
+          let usuarioData = response
+          setUser2(usuarioData.data)
           setUser(mergedUser);
           setRole(mergedUser.role);
           setLoading(false);
@@ -103,7 +108,7 @@ function CustomDrawerContent(props) {
   const fotoPerfil = user && typeof user.imagem === "string" && user.imagem.length > 0
     ? { uri: user.imagem }
     : require("../imgs/logo.webp");
-
+      
   return (
     <View style={{ flex: 1, padding: 20 }}>
       {/* Cabeçalho */}
@@ -115,7 +120,7 @@ function CustomDrawerContent(props) {
         />
         
 
-        <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>Olá,</Text>
+        <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>Olá, {user2.nome ? user2.nome : "Usuário"}</Text>
         <Text style={{ fontSize: 14, color: "gray", marginTop: 4 }}>
           {user ? user.email : "Usuário"}
         </Text>
@@ -127,9 +132,9 @@ function CustomDrawerContent(props) {
       </View>
 
       {/* Opções comuns */}
-      <TouchableOpacity style={{ marginVertical: 10 }} onPress={() => navigation.navigate("evento/conta")}>
+      {/*<TouchableOpacity style={{ marginVertical: 10 }} onPress={() => navigation.navigate("evento/conta")}>
         <Text style={{ fontSize: 16 }}>Minha Conta</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>*/}
 
       <TouchableOpacity
         style={{ marginVertical: 10 }}
