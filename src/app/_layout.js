@@ -36,6 +36,8 @@ function CustomDrawerContent(props) {
             setLoading(false);
           }
           return;
+        } else{
+          console.log('Dados não encontrado!r')
         }
 
         // Tenta carregar a URI local
@@ -120,13 +122,13 @@ function CustomDrawerContent(props) {
         />
         
 
-        <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>Olá, {user2.nome ? user2.nome : "Usuário"}</Text>
+        <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>Olá, {user2 ? user2.nome : "Usuário"}</Text>
         <Text style={{ fontSize: 14, color: "gray", marginTop: 4 }}>
           {user ? user.email : "Usuário"}
         </Text>
-        {user && user.nome && (
+        {user2 && user2.nome && (
           <Text style={{ fontSize: 12, color: "#08007B", fontWeight: "bold", marginTop: 2 }}>
-            {user.nome}
+            {user2 ? user2.nome : 'Usuário'}
           </Text>
         )}
       </View>
